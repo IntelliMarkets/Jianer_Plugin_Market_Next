@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "智慧市场插件索引",
+  "description": "SR思锐 智慧市场 的 Jianer_QQ_bot 插件索引文件（index.json）。智慧市场是纯静态服务：插件通过 PR 加入 monorepo，合并后 GitHub Actions 自动生成索引、为每个新版本打包 zip 并挂到 GitHub Release（tag 形如 <pluginId>@<version>）。jianer-cli 从仓库拉取索引，从 Release asset 下载 zip，下载量用 GitHub API 的 asset download_count 查询。",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "repository", "plugins"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "索引格式版本。jianer-cli 不认识的版本应拒绝解析并提示升级。"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "索引生成时间（UTC，ISO 8601）。"
+    },
+    "repository": {
+      "type": "object",
+      "description": "承载所有插件代码的 monorepo 信息，jianer-cli 据此拼接下载 URL。",
+      "required": ["url", "ref"],
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "仓库地址，例如 https://github.com/SR-Internet/jianer-market"
+        },
+        "ref": {
+          "type": "string",
+          "description": "生成索引时的 commit SHA。"
+        },
+        "releaseUrlTemplate": {
+          "type": "string",
+          "description": "Release asset 下载模板，占位符 {tag} 和 {asset}，例如 https://github.com/SR-Internet/jianer-market/releases/download/{tag}/{asset}"
+        }
+      }
+    },
+    "plugins": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/plugin" }
+    }
+  },
+  "$defs": {
+    "plugin": {
+      "type": "object",
+      "required": ["id", "name", "version", "description", "type", "path", "entry", "release"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "插件唯一 ID（jianer-cli plugin install <pluginId> 使用），全小写短横线风格，例如 jianerbot-plugin-advanced-quote。与 __plugin_meta__.name 一致。"
+        },
+        "name": {
+          "type": "string",
+          "description": "展示名称，例如 AdvancedQuote / 名人名言。"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+          "description": "SemVer 版本号，来自插件目录中的 market.json。jianer-cli 用它判断是否有更新。"
+        },
+        "description": {
+          "type": "string",
+          "description": "一句话描述，来自 __plugin_meta__.description。"
+        },
+        "usage": {
+          "type": "string",
+          "description": "使用说明，来自 __plugin_meta__.usage，可包含 {reminder} 占位符。"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["single-file", "package"],
+          "description": "single-file：plugins/ 下的单个 .py 文件；package：含 setup.py 的插件目录。"
+        },
+        "path": {
+          "type": "string",
+          "description": "插件在仓库内的相对路径，例如 plugins/AdvancedQuote 或 plugins/LikePlugin.py。"
+        },
+        "entry": {
+          "type": "string",
+          "description": "入口文件相对仓库根的路径：package 类型为 <path>/setup.py，single-file 类型等于 path。"
+        },
+        "authors": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "作者列表。"
+        },
+        "license": { "type": "string" },
+        "homepage": { "type": "string", "format": "uri" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "搜索用标签，jianer-cli plugin search 会匹配 id/name/description/tags。"
+        },
+        "requires": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "依赖的其他市场插件 ID（来自 __plugin_meta__.requires），install 时自动级联安装，remove 时默认级联删除。",
+          "default": []
+        },
+        "pythonRequires": {
+          "type": "string",
+          "description": "Python 版本约束（PEP 440），例如 >=3.12。"
+        },
+        "pipDependencies": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PEP 508 格式的 pip 依赖，例如 \"pillow>=10.0\"。安装插件后由 jianer-cli 执行 pip install。",
+          "default": []
+        },
+        "coreRequires": {
+          "type": "string",
+          "description": "兼容的 JianerCore 版本约束（PEP 440），例如 >=0.3,<1.0。"
+        },
+        "release": {
+          "type": "object",
+          "description": "当前版本的分发信息。zip 挂在 GitHub Release 上，解压到 bot 的 plugins/ 目录即完成安装。下载量通过 GitHub API /releases/tags/{tag} 里该 asset 的 download_count 获取。",
+          "required": ["tag", "asset", "size", "sha256"],
+          "additionalProperties": false,
+          "properties": {
+            "tag": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]*@\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+              "description": "Release tag，形如 <pluginId>@<version>，例如 jianerbot-plugin-advanced-quote@1.2.0。"
+            },
+            "asset": {
+              "type": "string",
+              "description": "zip 文件名，例如 jianerbot-plugin-advanced-quote-1.2.0.zip。zip 内部以插件目录名（或单文件名）为根。"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "zip 字节数。"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$",
+              "description": "zip 的 SHA-256，下载后必须校验。"
+            }
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "插件文件最后一次变更的 commit 时间。"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "default": false,
+          "description": "为 true 时 search 默认隐藏、install 时警告。"
+        },
+        "readme": {
+          "type": "string",
+          "description": "插件 README 的仓库相对路径（如有），jianer-cli plugin show --r 可拉取展示。"
+        }
+      }
+    }
+  }
+}

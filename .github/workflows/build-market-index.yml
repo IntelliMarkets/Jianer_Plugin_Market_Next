@@ -1,0 +1,80 @@
+name: 发布插件并更新智慧市场索引
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/**"
+      - "scripts/generate_index.py"
+      - "market-index.schema.json"
+      - ".github/workflows/build-market-index.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-index
+  cancel-in-progress: false
+
+jobs:
+  release-and-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+        with:
+          # 完整历史：git log 取每个插件的最后更新时间
+          fetch-depth: 0
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 生成索引并打包新版本
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/generate_index.py index .
+
+      - name: 用 schema 校验 index.json
+        run: |
+          pip install --quiet jsonschema
+          python -c "
+          import json, jsonschema
+          jsonschema.validate(json.load(open('index.json')),
+                              json.load(open('market-index.schema.json')))
+          print('index.json 通过 schema 校验')
+          "
+
+      - name: 创建 GitHub Release（每个新 pluginId@version 一个）
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'EOF' > /tmp/release_cmds.sh
+          import json, shlex
+          for r in json.load(open('dist/releases.json')):
+              print(' '.join(map(shlex.quote, [
+                  'gh', 'release', 'create', r['tag'], r['asset'],
+                  '--title', r['title'], '--notes', r['notes'] or r['title'],
+              ])))
+          EOF
+          if [ -s /tmp/release_cmds.sh ]; then
+            bash -e /tmp/release_cmds.sh
+          else
+            echo "没有需要发布的新版本"
+          fi
+
+      - name: 提交更新后的 index.json（若有变化）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.json
+          if git diff --cached --quiet; then
+            echo "索引无变化，跳过提交"
+          else
+            git commit -m "chore(market): 自动更新插件索引 [skip ci]"
+            git push
+          fi

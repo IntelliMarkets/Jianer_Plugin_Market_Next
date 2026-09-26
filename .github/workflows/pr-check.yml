@@ -1,0 +1,73 @@
+name: PR 插件校验
+
+on:
+  pull_request:
+    paths:
+      - "plugins/**"
+      - "scripts/generate_index.py"
+      - "market-index.schema.json"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出 PR
+        uses: actions/checkout@v4
+        with:
+          # 完整历史：版本检查用三点 diff 比较 base 分支，浅克隆找不到 merge base
+          fetch-depth: 0
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 校验插件（market.json、__plugin_meta__、ID/版本合法性、ID 唯一）
+        run: python scripts/generate_index.py check .
+
+      - name: 生成索引并用 schema 校验
+        run: |
+          pip install --quiet jsonschema
+          python -c "
+          import json, jsonschema
+          jsonschema.validate(json.load(open('index.json')),
+                              json.load(open('market-index.schema.json')))
+          print('index.json 通过 schema 校验')
+          "
+
+      - name: 检查版本号是否需要提升
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          # 对 PR 中改动过文件的每个插件：若 pluginId@version 的 Release 已存在，
+          # 说明作者改了代码但没在 market.json 里提升版本号 —— 直接失败。
+          git fetch origin "$BASE_REF" --depth=1
+          changed=$(git diff --name-only "origin/$BASE_REF...HEAD" -- plugins/ | cut -d/ -f2 | sort -u || true)
+          if [ -z "$changed" ]; then
+            echo "没有插件改动，跳过版本检查"
+            exit 0
+          fi
+          fail=0
+          for name in $changed; do
+            base="${name%.py}"; base="${base%.market.json}"
+            tag=$(python - "$base" <<'PY'
+          import json, sys
+          target = sys.argv[1]
+          for p in json.load(open('index.json'))['plugins']:
+              if p['path'].split('/')[1].removesuffix('.py') == target:
+                  print(p['release']['tag']); break
+          PY
+          )
+            [ -z "$tag" ] && continue
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "::error::插件 '$base' 的版本 $tag 已发布过，请在 market.json 中提升 version"
+              fail=1
+            fi
+          done
+          exit $fail
