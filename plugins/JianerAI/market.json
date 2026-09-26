@@ -1,0 +1,24 @@
+{
+  "id": "jianerbot-plugin-jianer-ai",
+  "name": "JianerAI",
+  "version": "1.0.0",
+  "authors": ["SRInternet-Studio"],
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/SRInternet-Studio/Jianer_QQ_bot/tree/dev/plugins/JianerAI",
+  "tags": ["ai", "agent", "memory", "tts", "jianer"],
+  "pythonRequires": ">=3.12",
+  "pipDependencies": [
+    "aiohttp",
+    "anthropic>=0.117,<1",
+    "ddgs>=9.14.4,<10",
+    "edge-tts",
+    "google-genai>=2.16,<3",
+    "httpx",
+    "openai>=2.30,<3",
+    "Pillow",
+    "playwright>=1.58,<1.59",
+    "PyJWT[crypto]>=2.10,<3",
+    "python-dotenv>=1.0,<2",
+    "cryptography"
+  ]
+}
