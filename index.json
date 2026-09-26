@@ -1,59 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-26T14:31:52+00:00",
+  "generatedAt": "2026-09-26T10:08:08+00:00",
   "repository": {
     "url": "https://github.com/IntelliMarkets/Jianer_Plugin_Market_Next",
-    "ref": "4325275a12705ce69aff5c50b0b292ed2d86a5d0",
+    "ref": "4b6d72d5b78811788c95001fe3be5d8be1dd5daf",
     "releaseUrlTemplate": "https://github.com/IntelliMarkets/Jianer_Plugin_Market_Next/releases/download/{tag}/{asset}"
   },
-  "plugins": [
-    {
-      "id": "jianerbot-plugin-jianer-ai",
-      "name": "JianerAI",
-      "version": "1.0.0",
-      "description": "Jianer AI agent, tools, dialogue, personas, speech, suffixes, and memory.",
-      "usage": "@机器人 [问题] —> 群聊 AI 对话（裸 At 也会回应）；私聊直接发送问题\n{reminder}ai管理菜单 / {reminder}切换AI [代码] —> 管理当前会话模型\n{reminder}角色扮演 / {reminder}切换角色 [名称] —> 管理当前会话角色\n{reminder}添加预设 / {reminder}删除预设 —> 管理角色预设\n{reminder}设置全局后缀 / {reminder}删除全局后缀 —> 管理 AI 全局后缀\n{reminder}设置特定后缀 / {reminder}删除特定后缀 —> 管理个人 AI 后缀\n{reminder}注销 —> 清空当前会话的短期上下文\n{reminder}简儿记忆 [子命令] —> 管理长期记忆\n{reminder}TTS [开启|关闭|状态] —> 管理当前会话语音回复\n{reminder}Agent [开启|关闭|自动|状态|工具] —> 管理当前会话 Agent",
-      "type": "package",
-      "path": "plugins/JianerAI",
-      "entry": "plugins/JianerAI/setup.py",
-      "requires": [
-        "jianerbot-plugin-alconna"
-      ],
-      "pipDependencies": [
-        "aiohttp",
-        "anthropic>=0.117,<1",
-        "ddgs>=9.14.4,<10",
-        "edge-tts",
-        "google-genai>=2.16,<3",
-        "httpx",
-        "openai>=2.30,<3",
-        "Pillow",
-        "playwright>=1.58,<1.59",
-        "PyJWT[crypto]>=2.10,<3",
-        "python-dotenv>=1.0,<2",
-        "cryptography"
-      ],
-      "release": {
-        "tag": "jianerbot-plugin-jianer-ai@1.0.0",
-        "asset": "jianerbot-plugin-jianer-ai-1.0.0.zip",
-        "size": 172132,
-        "sha256": "3e351cea3a6a30a2509fb881eda2e93bf535ad2d0a952f5332eabdf61c4c6b02"
-      },
-      "authors": [
-        "SRInternet-Studio"
-      ],
-      "license": "GPL-3.0-only",
-      "homepage": "https://github.com/SRInternet-Studio/Jianer_QQ_bot/tree/dev/plugins/JianerAI",
-      "tags": [
-        "ai",
-        "agent",
-        "memory",
-        "tts",
-        "jianer"
-      ],
-      "pythonRequires": ">=3.12",
-      "readme": "plugins/JianerAI/README.md",
-      "updatedAt": "2026-09-26T22:31:26+08:00"
-    }
-  ]
+  "plugins": []
 }
